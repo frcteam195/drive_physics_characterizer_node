@@ -4,9 +4,15 @@
 #include <thread>
 #include <string>
 #include <mutex>
+#include <vector>
 #include <rio_control_node/Motor_Control.h>
+#include <rio_control_node/Cal_Override_Mode.h>
 #include "actions/DriveSetHelper.hpp"
+#include "physics/DriveCharacterization.hpp"
 #include "DriveCharacterizationParameters.hpp"
+#include "actions/CollectVelocityData.hpp"
+#include "actions/CollectAccelerationData.hpp"
+#include <atomic>
 
 #define STR_PARAM(s) #s
 #define CKSP(s) ckgp( STR_PARAM(s) )
@@ -19,13 +25,61 @@ std::string ckgp(std::string instr)
 }
 
 ros::NodeHandle* node;
+std::atomic<double> leftMotorRpm;
+std::atomic<double> rightMotorRpm;
+
+void characterizeDrive()
+{
+	bool angularCharacterization = false;
+
+	std::vector<ck::physics::VelocityDataPoint> velocityData;
+	std::vector<ck::physics::AccelerationDataPoint> accelerationData;
+	ros::Rate rate(50);
+
+	ROS_INFO("Beginning Characterization of Velocity...");
+
+	CollectVelocityData cvd(velocityData, false, false, angularCharacterization);
+	cvd.start();
+	while (!cvd.isFinished())
+	{
+		cvd.update(leftMotorRpm, rightMotorRpm);
+		rate.sleep();
+	}
+	cvd.done();
+
+	ROS_INFO("Characterization of Velocity Completed!");
+
+	ROS_INFO("Sleeping for 20 seconds so the robot can be reset.");
+	std::this_thread::sleep_for(std::chrono::seconds(20));
+
+	ROS_INFO("Beginning Characterization of Acceleration...");
+
+	CollectAccelerationData cad(accelerationData, false, false, angularCharacterization);
+	cad.start();
+	while (!cad.isFinished())
+	{
+		cad.update(leftMotorRpm, rightMotorRpm);
+		rate.sleep();
+	}
+	cad.done();
+
+	ROS_INFO("Characterization of Acceleration Completed!");
+
+	ck::physics::CharacterizationConstants constants = ck::physics::DriveCharacterization::characterizeDrive(velocityData, accelerationData);
+	ROS_INFO("Characterization Constants | Kv: %lf, Ka: %lf, Ks: %lf", constants.kv, constants.ka, constants.ks);
+	ros::shutdown();
+}
 
 void publishDrive()
 {
 	static ros::Publisher robot_drive_pub = node->advertise<rio_control_node::Motor_Control>("MotorTuningControl", 1);
+	static ros::Publisher tuning_override_pub = node->advertise<rio_control_node::Cal_Override_Mode>("OverrideMode", 1);
+	static rio_control_node::Cal_Override_Mode overrideModeMsg;
+	overrideModeMsg.operation_mode = rio_control_node::Cal_Override_Mode::TUNING_PIDS;
 	ros::Rate rate(50);
 	while (ros::ok())
 	{
+		tuning_override_pub.publish(overrideModeMsg);
 		DriveSetHelper::getInstance().publishMessage(robot_drive_pub);
 		rate.sleep();
 	}
@@ -62,8 +116,13 @@ int main(int argc, char **argv)
 
 	DriveSetHelper::getInstance().setParameters(params);
 
-	std::thread mDrivePublishThread();
+	std::thread mDrivePublishThread(publishDrive);
+	std::thread mDriveCharacterize(characterizeDrive);
 
 	ros::spin();
+
+	mDrivePublishThread.join();
+	mDriveCharacterize.join();
+
 	return 0;
 }

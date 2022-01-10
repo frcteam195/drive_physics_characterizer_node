@@ -3,13 +3,11 @@
 #include <vector>
 #include "physics/DriveCharacterization.hpp"
 #include "ck_utilities/CKTimer.hpp"
-#include "ros/ros.h"
-
 
 class CollectVelocityData
 {
 public:
-    CollectVelocityData(ros::NodeHandle* node, std::vector<ck::physics::VelocityDataPoint>& data, bool highGear, bool reverse, bool turn);
+    CollectVelocityData(std::vector<ck::physics::VelocityDataPoint>& data, bool highGear, bool reverse, bool turn);
     void start();
     void update(double leftRPM, double rightRPM);
     bool isFinished();
@@ -24,9 +22,7 @@ private:
     bool mReverse;
     bool mHighGear;
 
-    bool mFinished = false;
-    double mStartTime = 0.0;
+    bool mFinished;
 
     ck::ElapsedTimer eTimer;
-    ros::NodeHandle* mNode;
 };

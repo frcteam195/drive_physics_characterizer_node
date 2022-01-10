@@ -4,9 +4,8 @@
 #include <cmath>
 #include "actions/DriveSetHelper.hpp"
 
-CollectVelocityData::CollectVelocityData(ros::NodeHandle* node, std::vector<ck::physics::VelocityDataPoint>& data, bool highGear, bool reverse, bool turn)
+CollectVelocityData::CollectVelocityData(std::vector<ck::physics::VelocityDataPoint>& data, bool highGear, bool reverse, bool turn)
 {
-    mNode = node;
     mVelocityData = &data;
     mHighGear = highGear;
     mReverse = reverse;
@@ -15,7 +14,6 @@ CollectVelocityData::CollectVelocityData(ros::NodeHandle* node, std::vector<ck::
 
 void CollectVelocityData::start()
 {
-    //TODO: Set High Gear
     eTimer.start();
 }
 
@@ -27,11 +25,9 @@ void CollectVelocityData::update(double leftRPM, double rightRPM)
         return;
     }
 
-    //Set Drive power
-    //mDrive.setOpenLoop(new DriveSignal((mReverse ? -1.0 : 1.0) * percentPower, (mReverse ? -1.0 : 1.0) * (mTurn ? -1.0 : 1.0) * percentPower));
-
+    DriveSetHelper::getInstance().setDrivePercentOut((mReverse ? -1.0 : 1.0) * percentPower, (mReverse ? -1.0 : 1.0) * (mTurn ? -1.0 : 1.0) * percentPower);
     mVelocityData->push_back(ck::physics::VelocityDataPoint{
-        (std::abs(leftRPM) + std::abs(rightRPM)) * M_PI / 60.0, //convert velocity to radians per second 
+        (std::abs(leftRPM) + std::abs(rightRPM)), //velocity in rpms
         percentPower * 12.0 //convert to volts
     });
 }
@@ -43,6 +39,5 @@ bool CollectVelocityData::isFinished()
 
 void CollectVelocityData::done()
 {
-    //Turn off Drive
-    //Flush data
+    DriveSetHelper::getInstance().setDrivePercentOut(0,0);
 }
