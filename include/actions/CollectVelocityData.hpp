@@ -29,6 +29,4 @@ private:
 
     ck::ElapsedTimer eTimer;
     ros::NodeHandle* mNode;
-
-    //static ros::Publisher *robot_drive_pub = node->advertise<rio_control_node::Robot_Status>("RobotStatus", 1);
 };

@@ -1,5 +1,8 @@
 #include "actions/CollectVelocityData.hpp"
+#include <rio_control_node/Motor_Control.h>
+#include <rio_control_node/Cal_Override_Mode.h>
 #include <cmath>
+#include "actions/DriveSetHelper.hpp"
 
 CollectVelocityData::CollectVelocityData(ros::NodeHandle* node, std::vector<ck::physics::VelocityDataPoint>& data, bool highGear, bool reverse, bool turn)
 {
