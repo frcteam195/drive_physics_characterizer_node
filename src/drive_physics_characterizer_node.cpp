@@ -6,6 +6,7 @@
 #include <mutex>
 #include <vector>
 #include <rio_control_node/Motor_Control.h>
+#include <rio_control_node/Motor_Status.h>
 #include <rio_control_node/Cal_Override_Mode.h>
 #include "actions/DriveSetHelper.hpp"
 #include "physics/DriveCharacterization.hpp"
@@ -27,6 +28,21 @@ std::string ckgp(std::string instr)
 ros::NodeHandle* node;
 std::atomic<double> leftMotorRpm;
 std::atomic<double> rightMotorRpm;
+
+void motorStatusCallback(const rio_control_node::Motor_Status &msg)
+{
+	for (auto it = msg.motors.begin(); it != msg.motors.end(); it++ )
+	{
+		if (it->id == 1)
+		{
+			leftMotorRpm = it->sensor_velocity;
+		}
+		if (it->id == 4)
+		{
+			rightMotorRpm = it->sensor_velocity;
+		}
+	}
+}
 
 void characterizeDrive()
 {
@@ -115,6 +131,8 @@ int main(int argc, char **argv)
 	}
 
 	DriveSetHelper::getInstance().setParameters(params);
+
+	ros::Subscriber motorStatusSub = node->subscribe("MotorStatus", 10, motorStatusCallback);
 
 	std::thread mDrivePublishThread(publishDrive);
 	std::thread mDriveCharacterize(characterizeDrive);
