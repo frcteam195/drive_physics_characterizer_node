@@ -17,11 +17,10 @@
 
 #define STR_PARAM(s) #s
 #define CKSP(s) ckgp( STR_PARAM(s) )
-static const std::string nodeParamPrefix = "/drive_physics_characterizer_node/";
 std::string ckgp(std::string instr)
 {
-	std::string retVal = nodeParamPrefix;
-	retVal += instr;
+	std::string retVal = ros::this_node::getName();
+	retVal += "/" + instr;
 	return retVal;
 }
 
