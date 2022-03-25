@@ -32,6 +32,9 @@ namespace ck
             // ConsoleReporter.report("r^2: " + p.R2());
             constants.ka = coeffs[1];
         }
+        //TODO: Calculate scrub from theoretical turn rate / actual turn rate
+        // Set to 0.5 duty cycle, measure actual. Take linear speed, calculate turning, divide
+
         void DriveCharacterization::getVelocityData(std::vector<VelocityDataPoint> &input, std::vector<double> &xPoints, std::vector<double> &yPoints)
         {
             xPoints.clear();

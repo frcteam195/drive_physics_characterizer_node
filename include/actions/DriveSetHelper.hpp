@@ -1,25 +1,21 @@
 #pragma once
 #include "ros/ros.h"
-#include <rio_control_node/Motor_Control.h>
-#include <rio_control_node/Motor.h>
 #include "ck_utilities/Singleton.hpp"
 #include <mutex>
 #include "DriveCharacterizationParameters.hpp"
+#include <drive_physics_characterizer_node/Drive_Characterization_Output.h>
 
 class DriveSetHelper : public Singleton<DriveSetHelper>
 {
     friend Singleton;
 public:
     void setDrivePercentOut(double leftMotorVal, double rightMotorVal);
-    void publishMessage(ros::Publisher &robot_drive_pub);
-    void setParameters(DriveCharacterizationParameters &params);
+    void publishMessage(ros::Publisher &drive_char_pub);
 
 private:
     DriveSetHelper();
 
-    rio_control_node::Motor_Control motorCtrl;
-    rio_control_node::Motor leftMotor;
-    rio_control_node::Motor rightMotor;
+    drive_physics_characterizer_node::Drive_Characterization_Output mDriveCharMsg;
 
     std::mutex mDriveHelperLock;
 };

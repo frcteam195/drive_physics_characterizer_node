@@ -5,28 +5,30 @@
 #include <string>
 #include <mutex>
 #include <vector>
-#include <rio_control_node/Motor_Control.h>
 #include <rio_control_node/Motor_Status.h>
-#include <rio_control_node/Cal_Override_Mode.h>
+#include <rio_control_node/Robot_Status.h>
 #include "actions/DriveSetHelper.hpp"
 #include "physics/DriveCharacterization.hpp"
 #include "DriveCharacterizationParameters.hpp"
 #include "actions/CollectVelocityData.hpp"
 #include "actions/CollectAccelerationData.hpp"
+#include "ck_utilities/ParameterHelper.hpp"
 #include <atomic>
-
-#define STR_PARAM(s) #s
-#define CKSP(s) ckgp( STR_PARAM(s) )
-std::string ckgp(std::string instr)
-{
-	std::string retVal = ros::this_node::getName();
-	retVal += "/" + instr;
-	return retVal;
-}
+#include <drive_physics_characterizer_node/Drive_Characterization_Output.h>
 
 ros::NodeHandle* node;
 std::atomic<double> leftMotorRpm;
 std::atomic<double> rightMotorRpm;
+
+static bool begin_test = false;
+
+void robotStatusCallback(const rio_control_node::Robot_Status &msg)
+{
+	if (msg.robot_state > 0)
+	{
+		begin_test = true;
+	}
+}
 
 void motorStatusCallback(const rio_control_node::Motor_Status &msg)
 {
@@ -50,6 +52,11 @@ void characterizeDrive()
 	std::vector<ck::physics::VelocityDataPoint> velocityData;
 	std::vector<ck::physics::AccelerationDataPoint> accelerationData;
 	ros::Rate rate(50);
+
+	while (!begin_test)
+	{
+		rate.sleep();
+	}
 
 	ROS_INFO("Beginning Characterization of Velocity...");
 
@@ -87,15 +94,13 @@ void characterizeDrive()
 
 void publishDrive()
 {
-	static ros::Publisher robot_drive_pub = node->advertise<rio_control_node::Motor_Control>("MotorTuningControl", 1);
-	static ros::Publisher tuning_override_pub = node->advertise<rio_control_node::Cal_Override_Mode>("OverrideMode", 1);
-	static rio_control_node::Cal_Override_Mode overrideModeMsg;
-	overrideModeMsg.operation_mode = rio_control_node::Cal_Override_Mode::TUNING_PIDS;
+	static ros::Publisher drive_char_pub = node->advertise<drive_physics_characterizer_node::Drive_Characterization_Output>("/DriveCharacterizationOutput", 1);
+	static drive_physics_characterizer_node::Drive_Characterization_Output driveCharMsg;
+	driveCharMsg.characterizing_drive = true;
 	ros::Rate rate(50);
 	while (ros::ok())
 	{
-		tuning_override_pub.publish(overrideModeMsg);
-		DriveSetHelper::getInstance().publishMessage(robot_drive_pub);
+		DriveSetHelper::getInstance().publishMessage(drive_char_pub);
 		rate.sleep();
 	}
 }
@@ -118,20 +123,8 @@ int main(int argc, char **argv)
 
 	node = &n;
 
-	DriveCharacterizationParameters params;
-	bool required_params_found = true;
-	required_params_found &= n.getParam(CKSP(left_master_id), params.left_master_id);
-	required_params_found &= n.getParam(CKSP(right_master_id), params.right_master_id);
-	required_params_found &= n.getParam(CKSP(motor_type), params.motor_type);
-	if (!required_params_found)
-	{
-		ROS_ERROR("Missing required parameters. Please check the list and make sure all required parameters are included");
-		return 1;
-	}
-
-	DriveSetHelper::getInstance().setParameters(params);
-
 	ros::Subscriber motorStatusSub = node->subscribe("MotorStatus", 10, motorStatusCallback);
+	ros::Subscriber robotStatusSub = node->subscribe("RobotStatus", 1, robotStatusCallback);
 
 	std::thread mDrivePublishThread(publishDrive);
 	std::thread mDriveCharacterize(characterizeDrive);

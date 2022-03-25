@@ -1,0 +1,3 @@
+bool characterizing_drive
+float64 left_drive_output
+float64 right_drive_output
