@@ -53,6 +53,8 @@ void characterizeDrive()
 	std::vector<ck::physics::AccelerationDataPoint> accelerationData;
 	ros::Rate rate(50);
 
+	ROS_INFO("Drive Characterization | Waiting for enable...");
+
 	while (!begin_test)
 	{
 		rate.sleep();
@@ -95,8 +97,6 @@ void characterizeDrive()
 void publishDrive()
 {
 	static ros::Publisher drive_char_pub = node->advertise<drive_physics_characterizer_node::Drive_Characterization_Output>("/DriveCharacterizationOutput", 1);
-	static drive_physics_characterizer_node::Drive_Characterization_Output driveCharMsg;
-	driveCharMsg.characterizing_drive = true;
 	ros::Rate rate(50);
 	while (ros::ok())
 	{

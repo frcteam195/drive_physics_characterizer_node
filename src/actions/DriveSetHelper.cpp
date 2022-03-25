@@ -3,7 +3,7 @@
 
 DriveSetHelper::DriveSetHelper()
 {
-
+    mDriveCharMsg.characterizing_drive = true;
 }
 
 void DriveSetHelper::setDrivePercentOut(double leftMotorVal, double rightMotorVal)
