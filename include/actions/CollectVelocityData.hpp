@@ -14,8 +14,8 @@ public:
     void done();
 
 private:
-    static constexpr double kMaxPower = 0.25;
-    static constexpr double kRampRate = 0.02;
+    static constexpr double kMaxPower = 0.5;
+    static constexpr double kRampRate = 0.05;
 
     std::vector<ck::physics::VelocityDataPoint> *mVelocityData;
     bool mTurn;
