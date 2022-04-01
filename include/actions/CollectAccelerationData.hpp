@@ -14,8 +14,8 @@ public:
     void done();
 
 private:
-    static constexpr double kPower = 0.5;
-    static constexpr double kTotalTime = 2.0;
+    static constexpr double kPower = 0.45;
+    static constexpr double kTotalTime = 2.25;
 
     std::vector<ck::physics::AccelerationDataPoint> *mAccelerationData;
     bool mTurn;
