@@ -21,7 +21,7 @@ void CollectAccelerationData::start()
 
 void CollectAccelerationData::update(double leftRPM, double rightRPM)
 {
-    double currentVelocity = std::fabs(leftRPM) + std::fabs(rightRPM);
+    double currentVelocity = (std::fabs(leftRPM) + std::fabs(rightRPM)) * ck::math::PI / 60.0;
     double currentTime = eTimer.hasElapsed();
     if (mPrevTime == 0)
     {

@@ -27,7 +27,7 @@ void CollectVelocityData::update(double leftRPM, double rightRPM)
 
     DriveSetHelper::getInstance().setDrivePercentOut((mReverse ? -1.0 : 1.0) * percentPower, (mReverse ? -1.0 : 1.0) * (mTurn ? -1.0 : 1.0) * percentPower);
     mVelocityData->push_back(ck::physics::VelocityDataPoint{
-        (std::abs(leftRPM) + std::abs(rightRPM)), //velocity in rpms
+        (std::abs(leftRPM) + std::abs(rightRPM)) * ck::math::PI / 60.0, //velocity in rad/s
         percentPower * 12.0 //convert to volts
     });
 }
